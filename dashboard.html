@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard{% endblock %}
+
+{% block content %}
+<div class="customer-welcome mb-4">
+    <h1>Welcome, {{ current_user.username }}</h1>
+</div>
+
+<div class="dashboard-container">
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Active Orders</h5>
+                    <p class="display-4">{{ active_orders_count }}</p>
+                    <a href="{{ url_for('user.orders') }}" class="btn btn-light">View Orders</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Cart Items</h5>
+                    <p class="display-4">{{ cart_items_count }}</p>
+                    <a href="{{ url_for('main.cart') }}" class="btn btn-light">View Cart</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Negotiations</h5>
+                    <p class="display-4">{{ pending_negotiations }}</p>
+                    <a href="{{ url_for('user.negotiations') }}" class="btn btn-dark">View Negotiations</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if recent_orders %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Orders</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Shop</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.shop.name }}</td>
+                            <td>৳{{ "%.2f"|format(order.total_amount) }}</td>
+                            <td>
+                                <span class="badge bg-{{ {
+                                    'pending': 'warning',
+                                    'confirmed': 'info',
+                                    'delivering': 'primary',
+                                    'completed': 'success',
+                                    'cancelled': 'danger'
+                                }[order.status] }}">
+                                    {{ order.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if order.status in ['delivering', 'confirmed'] %}
+                                    <a href="{{ url_for('user.track_order', order_id=order.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-geo-alt"></i> Track
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url_for('user.order_detail', order_id=order.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+
+{% endblock %}
