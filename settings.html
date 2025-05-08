@@ -1,26 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Delivery Settings{% endblock %}
+{% block title %}User Settings - QuickShop{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">Delivery Person Settings</h3>
+                    <h3 class="mb-0">Account Settings</h3>
                 </div>
                 <div class="card-body">
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-
-                    <form method="POST">
+                    <form method="POST" action="{{ url_for('user.settings') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" 
@@ -32,16 +25,93 @@
                                    value="{{ current_user.email }}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="address" class="form-label">Current Address</label>
+                            <label for="address" class="form-label">Delivery Address</label>
                             <input type="text" class="form-control" id="address" name="address" 
                                    value="{{ current_user.address }}" required>
-                            <div id="map" style="height: 300px; width: 100%; margin-top: 10px;"></div>
                         </div>
                         
                         <!-- Hidden fields for coordinates -->
                         <input type="hidden" id="latitude" name="latitude" value="{{ current_user.location_lat }}">
                         <input type="hidden" id="longitude" name="longitude" value="{{ current_user.location_lng }}">
                         
+                        <!-- Notification Settings -->
+                        <h5 class="mb-3">Notification Preferences</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="email_notifications" 
+                                       name="email_notifications" {% if user.settings.email_notifications %}checked{% endif %}>
+                                <label class="form-check-label" for="email_notifications">
+                                    Email Notifications
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Receive order updates and important notifications via email
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="order_updates" 
+                                       name="order_updates" {% if user.settings.order_updates %}checked{% endif %}>
+                                <label class="form-check-label" for="order_updates">
+                                    Order Status Updates
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="promotional_emails" 
+                                       name="promotional_emails" {% if user.settings.promotional_emails %}checked{% endif %}>
+                                <label class="form-check-label" for="promotional_emails">
+                                    Promotional Emails
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Settings -->
+                        <h5 class="mb-3 mt-4">Privacy Settings</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="show_profile" 
+                                       name="show_profile" {% if user.settings.show_profile %}checked{% endif %}>
+                                <label class="form-check-label" for="show_profile">
+                                    Show Profile to Other Users
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="share_activity" 
+                                       name="share_activity" {% if user.settings.share_activity %}checked{% endif %}>
+                                <label class="form-check-label" for="share_activity">
+                                    Share Shopping Activity
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Allow shops to see your shopping preferences
+                            </small>
+                        </div>
+
+                        <!-- Communication Preferences -->
+                        <h5 class="mb-3 mt-4">Communication Preferences</h5>
+                        <div class="mb-3">
+                            <label for="preferred_language" class="form-label">Preferred Language</label>
+                            <select class="form-select" id="preferred_language" name="preferred_language">
+                                <option value="en" {% if user.settings.preferred_language == 'en' %}selected{% endif %}>English</option>
+                                <option value="bn" {% if user.settings.preferred_language == 'bn' %}selected{% endif %}>Bengali</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="timezone" class="form-label">Timezone</label>
+                            <select class="form-select" id="timezone" name="timezone">
+                                <option value="Asia/Dhaka" {% if user.settings.timezone == 'Asia/Dhaka' %}selected{% endif %}>Bangladesh (GMT+6)</option>
+                                <!-- Add more timezone options as needed -->
+                            </select>
+                        </div>
+
                         <hr class="my-4">
                         <h4 class="mb-3">Update Password</h4>
                         <div class="mb-3">
@@ -61,10 +131,27 @@
                             <small>Leave password fields empty if you don't want to change your password.</small>
                         </div>
                         
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
+
+                    <!-- Delete Account Section -->
+                    <div class="mt-5">
+                        <h5 class="text-danger">Danger Zone</h5>
+                        <div class="card border-danger mt-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Delete Account</h6>
+                                <p class="card-text">Once you delete your account, there is no going back. Please be certain.</p>
+                                <form method="POST" action="{{ url_for('user.delete_account') }}" 
+                                      onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-danger">Delete Account</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,64 +160,19 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&libraries=places"></script>
 <script>
-let map;
-let marker;
-
-function initMap() {
-    // Initialize map
-    const defaultLocation = {
-        lat: {{ current_user.location_lat or 0 }},
-        lng: {{ current_user.location_lng or 0 }}
-    };
-
-    map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 15,
-        center: defaultLocation,
-    });
-
-    // Add marker for current location
-    marker = new google.maps.Marker({
-        position: defaultLocation,
-        map: map,
-        draggable: true
-    });
-
-    // Update coordinates when marker is dragged
-    marker.addListener('dragend', function() {
-        const position = marker.getPosition();
-        document.getElementById('latitude').value = position.lat();
-        document.getElementById('longitude').value = position.lng();
-        
-        // Reverse geocode to update address
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: position }, function(results, status) {
-            if (status === 'OK' && results[0]) {
-                document.getElementById('address').value = results[0].formatted_address;
-            }
-        });
-    });
-
-    // Initialize Places Autocomplete
+// Initialize location autocomplete if Google Maps API is available
+if (typeof google !== 'undefined') {
     const addressInput = document.getElementById('address');
     const autocomplete = new google.maps.places.Autocomplete(addressInput);
     
     autocomplete.addListener('place_changed', function() {
         const place = autocomplete.getPlace();
         if (place.geometry) {
-            // Update map
-            map.setCenter(place.geometry.location);
-            marker.setPosition(place.geometry.location);
-            
-            // Update coordinates
             document.getElementById('latitude').value = place.geometry.location.lat();
             document.getElementById('longitude').value = place.geometry.location.lng();
         }
     });
 }
-
-// Initialize map when page loads
-window.addEventListener('load', initMap);
 </script>
 {% endblock %}
